@@ -1,38 +1,41 @@
 import express, { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import { verifyPassword } from './lib/auth';
+import pgPool from './pool';
 
 const router: Router = express.Router();
 
-async function hash(password) {
-    return new Promise((resolve, reject) => {
-        const salt = crypto.randomBytes(16).toString('hex');
-        
-        crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-            if(err) {
-                reject(err);
-            }
-            resolve(salt + ':' + derivedKey.toString('hex'));
-        })
-    });
-}
-
 router.post("/", async (req: Request, res: Response) => {
 
+    const client = await pgPool.connect();
+
     try {
-        const hashedPassword = await hash('mdp test');
-        console.log (hashedPassword);
+        const { email, password } = req.body;
+        const resQuery = await client.query('SELECT * from users WHERE email = $1', [email]);
+        const { rows } = resQuery;
+        if (rows.length !== 1) {
+            throw Error("user not found");
+        }
+        const user = rows[0];
+        if (! await verifyPassword(password, user.password)) {
+            throw Error("invalid credentials");
+        }
         res.json({
             res: jwt.sign(
-                { user_id: '123' },
+                {
+                    user_id: user.id,
+                    email: user.email,
+                },
                 process.env.TOKEN_KEY,
                 {
-                    expiresIn: "2h",
+                    expiresIn: "24h",
                 }
             )
         })
     } catch (e) {
         res.status(500).send(e.toString());
+    } finally {
+        client.release();
     }
 });
 
