@@ -1,51 +1,51 @@
 import express, { Router , Request, Response} from 'express';
+import pgPool from './pool';
 
 const router: Router = express.Router();
 
 router.get("/", async (req: Request, res : Response) => {
+
+    const client = await pgPool.connect();
+
     try {
-        res.json([
-            {
-                id: '131415',
-                name: 'test user 1',
-                email: 'test1@gmail.com',
-                mdp: 'TEST1!',
-            },
-            {
-                id: '161718',
-                name: 'test user 2',
-                email: 'test2@gmail.com',
-                mdp: 'TEST2!',
-            },
-        ])
+        const resQuery = await client.query('SELECT * from users');
+        const { rows } = resQuery;
+        res.json(rows);
     } catch (e) {
         res.status(500).send(e.toString());
+    } finally {
+        client.release();
     }
 });
 
 router.get("/:userId", async (req: Request, res : Response) => {
-    const {userId} = req.params;
+
+    const client = await pgPool.connect();
+   
     try {
-        res.json(
-            {
-                id: userId,
-                name: 'test user 1',
-                email: 'test1@gmail.com',
-                mdp: 'TEST1!',
-            }
-        )
+        const {userId} = req.params;
+        const resQuery = await client.query('SELECT * from users WHERE id = $1',[userId]);
+        const { rows } = resQuery;
+        res.json(rows);
     } catch (e) {
         res.status(500).send(e.toString());
+    } finally {
+        client.release();
     }
 });
 
 router.post("/", async (req: Request, res : Response) => {
-    console.log(req.body)
+
+    const client = await pgPool.connect();
+
     try {
-        res.json({status: 'post user ok'}
-        )
+        const {name, email, password} = req.body;
+        await client.query('INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING *',[name, email, password]);
+        res.json({status: 'post user ok'});
     } catch (e) {
         res.status(500).send(e.toString());
+    } finally {
+        client.release();
     }
 });
 
