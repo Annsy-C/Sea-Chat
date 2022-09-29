@@ -1,51 +1,56 @@
 import express, { Router , Request, Response} from 'express';
+import pgPool from './pool';
 
-const router: Router = express.Router();
+const router: Router = express.Router( {
+    mergeParams: true,
+});
 
 router.get("/", async (req: Request, res : Response) => {
+
+    const client = await pgPool.connect();
+   
     try {
-        res.json([
-            {
-                id: '789',
-                content: 'premier message',
-                date: '28/09/2022',
-                author: 'test user 1',
-            },
-            {
-                id: '101112',
-                content: 'deuxieme message',
-                date: '28/09/2022',
-                author: 'test user 2',
-            },
-        ])
+        const {roomId} = req.params;
+        const resQuery = await client.query('SELECT * from messages WHERE room = $1',[roomId]);
+        const { rows } = resQuery;
+        res.json(rows);
+        console.log(req.params);
     } catch (e) {
         res.status(500).send(e.toString());
+    } finally {
+        client.release();
     }
 });
 
 router.get("/:messageId", async (req: Request, res : Response) => {
-    const {messageId} = req.params;
+
+    const client = await pgPool.connect();
+   
     try {
-        res.json(
-            {
-                id: messageId,
-                content: 'premier message',
-                date: '28/09/2022',
-                author: 'test user 1',
-            }
-        )
+        const {messageId} = req.params;
+        const resQuery = await client.query('SELECT * from messages WHERE id = $1',[messageId]);
+        const { rows } = resQuery;
+        res.json(rows);
     } catch (e) {
         res.status(500).send(e.toString());
+    } finally {
+        client.release();
     }
 });
 
 router.post("/", async (req: Request, res : Response) => {
-    console.log(req.body)
+    
+    const client = await pgPool.connect();
+
     try {
-        res.json({status: 'post message ok'}
-        )
+        const {content, author} = req.body;
+        const {roomId} = req.params;
+        await client.query('INSERT INTO messages(room, content, author) VALUES($1, $2, $3) RETURNING *',[roomId, content, author]);
+        res.json({status: 'post message ok'});
     } catch (e) {
         res.status(500).send(e.toString());
+    } finally {
+        client.release();
     }
 });
 
