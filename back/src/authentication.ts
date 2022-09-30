@@ -1,7 +1,7 @@
 import express, { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { verifyPassword } from './lib/auth';
-import pgPool from './pool';
+import pgPool from './lib/pool';
 
 const router: Router = express.Router();
 

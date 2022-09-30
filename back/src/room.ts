@@ -1,5 +1,5 @@
 import express, { Router, Request, Response } from 'express';
-import pgPool from './pool';
+import pgPool from './lib/pool';
 
 const router: Router = express.Router();
 

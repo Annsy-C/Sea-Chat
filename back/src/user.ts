@@ -1,10 +1,11 @@
 import express, { Router, Request, Response } from 'express';
-import pgPool from './pool';
+import pgPool from './lib/pool';
 import { hashPassword } from './lib/auth';
+import { enableAuth } from './lib/middlewares';
 
 const router: Router = express.Router();
 
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", enableAuth, async (req: Request, res: Response) => {
 
     const client = await pgPool.connect();
 
@@ -19,7 +20,7 @@ router.get("/", async (req: Request, res: Response) => {
     }
 });
 
-router.get("/:userId", async (req: Request, res: Response) => {
+router.get("/:userId", enableAuth, async (req: Request, res: Response) => {
 
     const client = await pgPool.connect();
 
