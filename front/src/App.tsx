@@ -1,11 +1,15 @@
 import React from 'react';
 import './App.css';
 import { NextUIProvider } from '@nextui-org/react';
+import Layout from './components/layout';
+import { Outlet } from "react-router-dom";
 
 function App() {
   return (
     <NextUIProvider>
-      <h1>SeaChat</h1>
+      <Layout>
+        <Outlet />
+      </Layout>
     </NextUIProvider>
   );
 }
