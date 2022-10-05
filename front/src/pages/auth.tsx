@@ -1,8 +1,26 @@
 import { Button, Container, Input, Spacer, Card, Grid } from '@nextui-org/react';
-import React from 'react';
+import React, { useEffect } from 'react';
 
-const Auth = () => (
-	<Grid.Container gap={2} justify="center">
+const Auth = () => {
+
+	useEffect(() => {
+
+		let fetchInit: RequestInit = {
+			method: 'GET',
+		};
+
+		fetch('http://localhost:3000/users', fetchInit)
+			.then(res => {
+				if (res.status === 200) {
+					return res.json()
+				}
+				return null;
+			})
+			.then(jsonRes => {
+
+			});
+	})
+	return (<Grid.Container gap={2} justify="center">
 		<Grid xs={12} md={4}>
 			<Container>
 				<Card>
@@ -25,7 +43,7 @@ const Auth = () => (
 				</Card>
 			</Container>
 		</Grid>
-	</Grid.Container>
-);
+	</Grid.Container>);
+}
 
 export default Auth;

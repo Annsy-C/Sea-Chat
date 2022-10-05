@@ -5,8 +5,7 @@ import { enableAuth } from './lib/middlewares';
 
 const router: Router = express.Router();
 
-router.get("/", enableAuth, async (req: Request, res: Response) => {
-
+router.get("/", async (req: Request, res: Response) => {
     const client = await pgPool.connect();
 
     try {
