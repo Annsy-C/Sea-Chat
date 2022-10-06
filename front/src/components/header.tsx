@@ -1,9 +1,19 @@
+import { Container, Text } from '@nextui-org/react';
 import React from 'react';
 
 const Header = () => (
-	<section className="hero is-fixed-top is-primary is-small">
-		<h1>Sea Chat</h1>
-	</section>
+    <Container>
+        <Text
+        h1
+        size={60}
+        css={{
+          textGradient: "45deg, $cyan700 -20%, $blue300 50%",
+        }}
+        weight="bold"
+      >
+        Sea Chat
+      </Text>
+    </Container>
 );
 
 export default Header;
