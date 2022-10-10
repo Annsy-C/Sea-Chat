@@ -2,6 +2,7 @@ import express, { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { verifyPassword } from './lib/auth';
 import pgPool from './lib/pool';
+import { enableAuth } from './lib/middlewares';
 
 const router: Router = express.Router();
 
@@ -32,6 +33,22 @@ router.post("/", async (req: Request, res: Response) => {
                 }
             )
         })
+    } catch (e) {
+        res.status(500).send(e.toString());
+    } finally {
+        client.release();
+    }
+});
+
+router.get("/me", enableAuth, async (req: Request, res: Response) => {
+
+    const client = await pgPool.connect();
+    const { user_id } = req;
+
+    try {
+        const resQuery = await client.query('SELECT id, email from users WHERE id = $1', [user_id]);
+        const { rows } = resQuery;
+        res.json(rows[0]);
     } catch (e) {
         res.status(500).send(e.toString());
     } finally {

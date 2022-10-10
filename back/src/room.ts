@@ -26,7 +26,7 @@ router.get("/:roomId", async (req: Request, res: Response) => {
         const { roomId } = req.params;
         const resQuery = await client.query('SELECT * from rooms WHERE id = $1', [roomId]);
         const { rows } = resQuery;
-        res.json(rows);
+        res.json(rows[0]);
     } catch (e) {
         res.status(500).send(e.toString());
     } finally {

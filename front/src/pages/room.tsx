@@ -1,16 +1,19 @@
-import React from 'react';
-import { Button, Input, Spacer, Card, Grid, Text, Row, Textarea } from '@nextui-org/react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Button, Spacer, Card, Grid, Text, Row, Textarea } from '@nextui-org/react';
 import '../App.css';
+import { useParams } from 'react-router-dom';
+import { AuthContext } from '../context/authContext';
 
 type MessageProps = {
 	content: string,
-	author: string,
+	email: string,
+	user_id: number
 }
 
-const messageListElement = (messages: MessageProps[], author: string) => (
+const messageListElement = (messages: MessageProps[], userId: number) => (
 	<>
 		{messages.map((message: MessageProps) => {
-			if (message.author === author) {
+			if (message.user_id === userId) {
 				return (
 					<Row justify="flex-end">
 						<Grid>
@@ -18,7 +21,7 @@ const messageListElement = (messages: MessageProps[], author: string) => (
 								status="primary"
 								helperColor="primary"
 								initialValue={message.content}
-								helperText={message.author}
+								helperText={message.email}
 								minRows={1}
 								readOnly
 							/>
@@ -33,7 +36,7 @@ const messageListElement = (messages: MessageProps[], author: string) => (
 							status="secondary"
 							helperColor="secondary"
 							initialValue={message.content}
-							helperText={message.author}
+							helperText={message.email}
 							minRows={1}
 							readOnly
 						/>
@@ -45,17 +48,81 @@ const messageListElement = (messages: MessageProps[], author: string) => (
 
 )
 
-const Room = () => {
+const messageCreation = (bearerToken: String, content: String, roomId: String | undefined) => {
+	let fetchInit: RequestInit = {
+		headers: {
+			'Authorization': `Bearer ${bearerToken}`,
+			'Content-type': 'application/json'
+		},
+		method: 'POST',
+		body: JSON.stringify({ content })
+	};
+	fetch(`http://localhost:3000/rooms/${roomId}/messages`, fetchInit)
+		.then(res => {
+			if (res.status === 200) {
+				alert("message créé avec succès");
+			} else {
+				alert("erreur lors de l'envoi du message");
+			}
+		});
+}
 
-	const messages = [{ content: "coucou", author: "test1" },
-	{ content: "salut", author: "test2" },
-	{ content: "tchou tchoupi tchou nyo nyo nyo", author: "test2" },
-	{ content: "tchou", author: "test1" },
-	{ content: "snouf", author: "test2" },];
+const Room = () => {
+	const { bearerToken } = useContext(AuthContext);
+	const { roomId } = useParams();
+	const [messages, setMessages] = useState([]);
+	const [reloadRequired, setReloadRequired] = useState(false);
+	const [messageContent, setMessageContent] = useState("");
+	const [roomName, setRoomName] = useState("");
+	const [userId, setUserId] = useState(0);
+	const bottomRef = useRef<null | HTMLDivElement>(null);
+
+	useEffect(() => {
+		let fetchInit: RequestInit = {
+			method: 'GET',
+			headers: { 'Authorization': `Bearer ${bearerToken}` },
+		};
+
+		fetch(`http://localhost:3000/rooms/${roomId}`, fetchInit)
+			.then(res => {
+				if (res.status === 200) {
+					return res.json();
+				}
+			})
+			.then(jsonRes => {
+				setRoomName(jsonRes.name);
+			})
+
+		fetch(`http://localhost:3000/auth/me`, fetchInit)
+			.then(res => {
+				if (res.status === 200) {
+					return res.json();
+				}
+			})
+			.then(jsonRes => {
+				setUserId(jsonRes.id);
+			})
+
+		fetch(`http://localhost:3000/rooms/${roomId}/messages`, fetchInit)
+			.then(res => {
+				if (res.status === 200) {
+					return res.json();
+				}
+				return null;
+			})
+			.then(jsonRes => {
+				setMessages(jsonRes);
+			});
+	}, [bearerToken, setMessages, reloadRequired, roomId, roomName])
+
+	useEffect(() => {
+		bottomRef.current?.scrollIntoView({behavior: 'smooth'});
+	  }, [messages]);
+
 
 	return (
 		<Grid.Container gap={2} justify="center">
-			<Grid xs={12} md={6}>
+			<Grid xs={12} md={4}>
 				<Card>
 					<Card.Header>
 						<Text
@@ -66,14 +133,15 @@ const Room = () => {
 							}}
 							weight="bold"
 						>
-							(Salon Actuel)
+							{roomName}
 						</Text>
 					</Card.Header>
 					<Card.Divider />
 					<div className="scroll">
 						<Card.Body >
 							<Grid.Container gap={2} justify="center">
-								{messageListElement(messages, "test1")}
+								{messageListElement(messages,userId)}
+								<div ref={bottomRef} />
 							</Grid.Container>
 						</Card.Body>
 					</div>
@@ -84,9 +152,11 @@ const Room = () => {
 								placeholder="nouveau message"
 								minRows={2}
 								width="100%"
+								value={messageContent}
+								onChange={(event) => setMessageContent(event.target.value)}
 							/>
 							<Spacer x={1} />
-							<Button flat auto>Post</Button>
+							<Button flat auto onPress={() => messageCreation(bearerToken, messageContent, roomId)}>Envoi</Button>
 						</Row>
 					</Card.Footer>
 				</Card>
