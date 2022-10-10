@@ -1,7 +1,9 @@
-import express, { Router, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
+import expressWs from 'express-ws';
 import pgPool from './lib/pool';
+import * as ws from 'ws';
 
-const router: Router = express.Router();
+const router: expressWs.Router = express.Router();
 
 router.get("/", async (req: Request, res: Response) => {
 
@@ -47,6 +49,34 @@ router.post("/", async (req: Request, res: Response) => {
     } finally {
         client.release();
     }
+});
+
+const rooms: Record<string, Record<number, ws>> = {};
+
+router.ws('/:roomId/ws', (ws, req) => {
+    const { roomId } = req.params;
+
+    if (!rooms[roomId]) {
+        rooms[roomId] = {};
+    }
+
+    rooms[roomId][req.user_id] = ws;
+    console.log("connection established with", req.user_id);
+
+    ws.on('close', () => {
+        delete rooms[roomId][req.user_id];
+        if (Object.keys(rooms[roomId]).length === 0) {
+            delete rooms[roomId];
+        }
+        console.log('The connection was closed', rooms);
+    })
+
+    ws.on('message', (msg) => {
+        console.log('Message received', msg, rooms);
+        for (const [, userWs] of Object.entries(rooms[roomId])) {
+            userWs.send(JSON.stringify({email: req.email, msg}));
+        }
+    });
 });
 
 export default router;
