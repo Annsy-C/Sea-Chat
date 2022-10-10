@@ -7,12 +7,12 @@ import './App.css';
 import {
   createBrowserRouter,
   RouterProvider,
-  Route,
 } from "react-router-dom";
 import ErrorPage from './pages/error-page';
 import RoomsList from './pages/roomsList';
 import Room from './pages/room';
 import Auth from './pages/auth';
+import ProtectedRoute from './components/protectedRoute';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -30,11 +30,11 @@ const router = createBrowserRouter([
       },
       {
         path: "rooms",
-        element: <RoomsList />,
+        element: <ProtectedRoute><RoomsList /></ProtectedRoute>,
       },
       {
         path: "rooms/:roomId",
-        element: <Room />,
+        element: <ProtectedRoute><Room /></ProtectedRoute>,
       },
     ]
   },
