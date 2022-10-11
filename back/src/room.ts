@@ -64,17 +64,25 @@ router.ws('/:roomId/ws', (ws: ws, req: Request) => {
     console.log("connection established with", req.user_id);
 
     ws.on('close', () => {
-        delete rooms[roomId][req.user_id];
-        if (Object.keys(rooms[roomId]).length === 0) {
-            delete rooms[roomId];
+        try {
+            delete rooms[roomId][req.user_id];
+            if (Object.keys(rooms[roomId]).length === 0) {
+                delete rooms[roomId];
+            }
+        } catch (e) {
+            console.error(e.toString());
         }
         console.log('The connection was closed', rooms);
     })
 
     ws.on('message', (msg : ws.RawData) => {
         console.log('Message received', msg, rooms);
-        for (const [, userWs] of Object.entries(rooms[roomId])) {
-            userWs.send(JSON.stringify({email: req.email, msg}));
+        try {
+            for (const [, userWs] of Object.entries(rooms[roomId])) {
+                userWs.send(JSON.stringify({email: req.email, msg}));
+            }
+        } catch(e) {
+            console.error(e.toString());
         }
     });
 });

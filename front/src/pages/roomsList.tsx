@@ -34,7 +34,7 @@ const roomCreation = (bearerToken: String, name: String, setReloadRequired: Reac
 		method: 'POST',
 		body: JSON.stringify({ name })
 	};
-	fetch('http://localhost:3000/rooms', fetchInit)
+	fetch(`${process.env.REACT_APP_BACK_URL}/rooms`, fetchInit)
 		.then(res => {
 			if (res.status === 200) {
 				alert("Salon créé avec succès");
@@ -58,7 +58,7 @@ const RoomsList = () => {
 			headers: { 'Authorization': `Bearer ${bearerToken}` },
 		};
 
-		fetch('http://localhost:3000/rooms', fetchInit)
+		fetch(`${process.env.REACT_APP_BACK_URL}/rooms`, fetchInit)
 			.then(res => {
 				if (res.status === 200) {
 					return res.json()
