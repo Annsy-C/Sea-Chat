@@ -53,7 +53,7 @@ router.post("/", async (req: Request, res: Response) => {
 
 const rooms: Record<string, Record<number, ws>> = {};
 
-router.ws('/:roomId/ws', (ws, req) => {
+router.ws('/:roomId/ws', (ws: ws, req: Request) => {
     const { roomId } = req.params;
 
     if (!rooms[roomId]) {
@@ -71,7 +71,7 @@ router.ws('/:roomId/ws', (ws, req) => {
         console.log('The connection was closed', rooms);
     })
 
-    ws.on('message', (msg) => {
+    ws.on('message', (msg : ws.RawData) => {
         console.log('Message received', msg, rooms);
         for (const [, userWs] of Object.entries(rooms[roomId])) {
             userWs.send(JSON.stringify({email: req.email, msg}));
