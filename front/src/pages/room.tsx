@@ -69,7 +69,7 @@ const Room = () => {
 			body: JSON.stringify({ content })
 		};
 
-		fetch(`http://localhost:3000/rooms/${roomId}/messages`, fetchInit)
+		fetch(`${process.env.REACT_APP_BACK_URL}/rooms/${roomId}/messages`, fetchInit)
 			.then(res => {
 				if (!(res.status === 200)) {
 					alert("erreur lors de l'envoi du message");
@@ -85,7 +85,7 @@ const Room = () => {
 			headers: { 'Authorization': `Bearer ${bearerToken}` },
 		};
 
-		fetch(`http://localhost:3000/rooms/${roomId}/messages`, fetchInit)
+		fetch(`${process.env.REACT_APP_BACK_URL}/rooms/${roomId}/messages`, fetchInit)
 		.then(res => {
 			if (res.status === 200) {
 				return res.json();
@@ -98,7 +98,7 @@ const Room = () => {
 	}
 
 	useEffect(() => {
-        webSocket.current = new WebSocket(`ws://localhost:3000/rooms/${roomId}/ws?access_token=${bearerToken}`);
+        webSocket.current = new WebSocket(`${process.env.REACT_APP_WS_URL}/rooms/${roomId}/ws?access_token=${bearerToken}`);
         webSocket.current.onmessage = (message) => {
 			updateMessages();
         };
@@ -111,7 +111,7 @@ const Room = () => {
 			headers: { 'Authorization': `Bearer ${bearerToken}` },
 		};
 
-		fetch(`http://localhost:3000/rooms/${roomId}`, fetchInit)
+		fetch(`${process.env.REACT_APP_BACK_URL}/rooms/${roomId}`, fetchInit)
 			.then(res => {
 				if (res.status === 200) {
 					return res.json();
@@ -121,7 +121,7 @@ const Room = () => {
 				setRoomName(jsonRes.name);
 			})
 
-		fetch(`http://localhost:3000/auth/me`, fetchInit)
+		fetch(`${process.env.REACT_APP_BACK_URL}/auth/me`, fetchInit)
 			.then(res => {
 				if (res.status === 200) {
 					return res.json();

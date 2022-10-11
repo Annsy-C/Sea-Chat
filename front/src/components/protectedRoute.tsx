@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/authContext';
 
 type ProtectedRouteProps = {
@@ -9,7 +9,7 @@ type ProtectedRouteProps = {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
     const { bearerToken } = useContext(AuthContext);
-    const navigate = useNavigate();
+    const navigate : NavigateFunction = useNavigate();
 
     useEffect(() => {
         if (bearerToken === "") {

@@ -25,7 +25,7 @@ const Auth = () => {
 			method: 'POST',
 			body: JSON.stringify({email, password})
 		};
-		fetch('http://localhost:3000/users', fetchInit)
+		fetch(`${process.env.REACT_APP_BACK_URL}/users`, fetchInit)
 			.then(res => {
 				if (res.status === 200) {
 					alert("compte créé avec succès")
@@ -43,7 +43,7 @@ const Auth = () => {
 			method: 'POST',
 			body: JSON.stringify({email: email, password: password})
 		};
-		fetch('http://localhost:3000/auth', fetchInit)
+		fetch(`${process.env.REACT_APP_BACK_URL}/auth`, fetchInit)
 			.then(res => {
 				if (res.status === 200) {
 					return(res.json());

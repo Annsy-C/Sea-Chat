@@ -7,12 +7,12 @@ import { enableAuth } from './lib/middlewares';
 import expressWs from 'express-ws';
 
 const app = expressWs(express()).app;
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 import rooms from './room';
 
 app.use(cors({
-  "origin": "http://localhost:3001",
+  "origin": `${process.env.FRONT_URL}`,
 }));
 
 app.use(express.json());
