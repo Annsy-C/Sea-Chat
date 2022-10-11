@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import { AuthContext } from '../context/authContext';
 
 type MessageProps = {
+	id: number,
 	content: string,
 	email: string,
 	user_id: number
@@ -12,10 +13,10 @@ type MessageProps = {
 
 const messageListElement = (messages: MessageProps[], userId: number) => (
 	<>
-		{messages.map((message: MessageProps) => {
+		{messages.sort((a, b) => (a.id > b.id) ? 1 : -1).map((message: MessageProps) => {
 			if (message.user_id === userId) {
 				return (
-					<Row justify="flex-end">
+					<Row key={message.id} justify="flex-end">
 						<Grid>
 							<Textarea
 								status="primary"
@@ -30,7 +31,7 @@ const messageListElement = (messages: MessageProps[], userId: number) => (
 				)
 			}
 			return (
-				<Row justify="flex-start">
+				<Row key={message.id} justify="flex-start">
 					<Grid>
 						<Textarea
 							status="secondary"
@@ -48,34 +49,61 @@ const messageListElement = (messages: MessageProps[], userId: number) => (
 
 )
 
-const messageCreation = (bearerToken: String, content: String, roomId: String | undefined) => {
-	let fetchInit: RequestInit = {
-		headers: {
-			'Authorization': `Bearer ${bearerToken}`,
-			'Content-type': 'application/json'
-		},
-		method: 'POST',
-		body: JSON.stringify({ content })
-	};
-	fetch(`http://localhost:3000/rooms/${roomId}/messages`, fetchInit)
-		.then(res => {
-			if (res.status === 200) {
-				alert("message créé avec succès");
-			} else {
-				alert("erreur lors de l'envoi du message");
-			}
-		});
-}
-
 const Room = () => {
 	const { bearerToken } = useContext(AuthContext);
 	const { roomId } = useParams();
 	const [messages, setMessages] = useState([]);
-	const [reloadRequired, setReloadRequired] = useState(false);
 	const [messageContent, setMessageContent] = useState("");
 	const [roomName, setRoomName] = useState("");
 	const [userId, setUserId] = useState(0);
 	const bottomRef = useRef<null | HTMLDivElement>(null);
+	const webSocket = useRef<null | WebSocket>(null);
+
+	const messageCreation = (bearerToken: String, content: string, roomId: String | undefined) => {
+		let fetchInit: RequestInit = {
+			headers: {
+				'Authorization': `Bearer ${bearerToken}`,
+				'Content-type': 'application/json'
+			},
+			method: 'POST',
+			body: JSON.stringify({ content })
+		};
+
+		fetch(`http://localhost:3000/rooms/${roomId}/messages`, fetchInit)
+			.then(res => {
+				if (!(res.status === 200)) {
+					alert("erreur lors de l'envoi du message");
+				}
+				webSocket.current?.send(content);
+				setMessageContent("");
+			});
+	}
+
+	const updateMessages = () => {
+		const fetchInit: RequestInit = {
+			method: 'GET',
+			headers: { 'Authorization': `Bearer ${bearerToken}` },
+		};
+
+		fetch(`http://localhost:3000/rooms/${roomId}/messages`, fetchInit)
+		.then(res => {
+			if (res.status === 200) {
+				return res.json();
+			}
+			return null;
+		})
+		.then(jsonRes => {
+			setMessages(jsonRes);
+		});
+	}
+
+	useEffect(() => {
+        webSocket.current = new WebSocket(`ws://localhost:3000/rooms/${roomId}/ws?access_token=${bearerToken}`);
+        webSocket.current.onmessage = (message) => {
+			updateMessages();
+        };
+        return () => webSocket.current?.close();
+    }, [roomId, bearerToken]);
 
 	useEffect(() => {
 		let fetchInit: RequestInit = {
@@ -103,17 +131,8 @@ const Room = () => {
 				setUserId(jsonRes.id);
 			})
 
-		fetch(`http://localhost:3000/rooms/${roomId}/messages`, fetchInit)
-			.then(res => {
-				if (res.status === 200) {
-					return res.json();
-				}
-				return null;
-			})
-			.then(jsonRes => {
-				setMessages(jsonRes);
-			});
-	}, [bearerToken, setMessages, reloadRequired, roomId, roomName])
+		updateMessages();
+	}, [bearerToken, setMessages, roomId, roomName])
 
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({behavior: 'smooth'});

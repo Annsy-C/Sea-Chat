@@ -1,13 +1,15 @@
 import express from 'express';
 import cors from 'cors';
-import rooms from './room';
 import messages from './message';
 import users from './user';
 import auth from './authentication';
 import { enableAuth } from './lib/middlewares';
+import expressWs from 'express-ws';
 
-const app = express();
+const app = expressWs(express()).app;
 const port = 3000;
+
+import rooms from './room';
 
 app.use(cors({
   "origin": "http://localhost:3001",
